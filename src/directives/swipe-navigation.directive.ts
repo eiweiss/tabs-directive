@@ -1,7 +1,6 @@
 import {
   Directive,
   ElementRef,
-  HostListener,
   Input,
   OnDestroy,
   OnInit,
@@ -10,27 +9,36 @@ import {
 import { MatTabGroup } from '@angular/material/tabs';
 
 /**
- * Directive für Swipe- und Drag-Navigation auf Angular Material Tabs
+ * Directive for swipe and drag navigation on Angular Material Tabs
  *
- * Verwendung:
+ * Usage:
  * <mat-tab-group appSwipeNavigation>...</mat-tab-group>
  *
- * Die Directive nutzt die öffentliche API von Angular Material und
- * beeinträchtigt keine internen Berechnungen.
+ * The directive uses only the public Angular Material API and
+ * does not interfere with internal calculations.
  */
 @Directive({
   selector: '[appSwipeNavigation]',
-  standalone: true
+  standalone: true,
+  host: {
+    '(touchstart)': 'onTouchStart($event)',
+    '(touchmove)': 'onTouchMove($event)',
+    '(touchend)': 'onTouchEnd($event)',
+    '(touchcancel)': 'onTouchCancel($event)',
+    '(mousedown)': 'onMouseDown($event)',
+    '(document:mousemove)': 'onMouseMove($event)',
+    '(document:mouseup)': 'onMouseUp($event)'
+  }
 })
 export class SwipeNavigationDirective implements OnInit, OnDestroy {
   private elementRef = inject(ElementRef);
   private tabGroup = inject(MatTabGroup, { optional: true });
 
-  // Konfigurierbare Schwellenwerte
-  @Input() swipeThreshold = 50; // Minimale Distanz in Pixeln für Swipe
-  @Input() swipeVelocityThreshold = 0.3; // Minimale Geschwindigkeit für Swipe
+  // Configurable thresholds
+  @Input() swipeThreshold = 50; // Minimum distance in pixels for swipe
+  @Input() swipeVelocityThreshold = 0.3; // Minimum velocity for swipe
 
-  // Tracking für Touch/Mouse Events
+  // Tracking for Touch/Mouse events
   private startX = 0;
   private startY = 0;
   private startTime = 0;
@@ -38,50 +46,47 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
   private isTouchDevice = false;
 
   ngOnInit(): void {
-    // Prüfe ob Touch-Events unterstützt werden
+    // Check if touch events are supported
     this.isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
-    // Validiere dass MatTabGroup vorhanden ist
+    // Validate that MatTabGroup is present
     if (!this.tabGroup) {
       console.warn(
-        'SwipeNavigationDirective: Keine MatTabGroup gefunden. ' +
-        'Bitte auf mat-tab-group anwenden.'
+        'SwipeNavigationDirective: No MatTabGroup found. ' +
+        'Please apply to mat-tab-group.'
       );
     }
   }
 
   ngOnDestroy(): void {
-    // Cleanup falls nötig
+    // Cleanup if necessary
     this.isDragging = false;
   }
 
   // Touch Events
-  @HostListener('touchstart', ['$event'])
   onTouchStart(event: TouchEvent): void {
     if (event.touches.length !== 1) {
-      return; // Nur single-touch unterstützen
+      return; // Only support single-touch
     }
 
     this.startGesture(event.touches[0].clientX, event.touches[0].clientY);
   }
 
-  @HostListener('touchmove', ['$event'])
   onTouchMove(event: TouchEvent): void {
     if (!this.isDragging || event.touches.length !== 1) {
       return;
     }
 
-    // Verhindere Scroll während des Swipes
+    // Prevent scroll during swipe
     const deltaX = Math.abs(event.touches[0].clientX - this.startX);
     const deltaY = Math.abs(event.touches[0].clientY - this.startY);
 
-    // Nur horizontale Swipes behandeln
+    // Only handle horizontal swipes
     if (deltaX > deltaY && deltaX > 10) {
       event.preventDefault();
     }
   }
 
-  @HostListener('touchend', ['$event'])
   onTouchEnd(event: TouchEvent): void {
     if (!this.isDragging) {
       return;
@@ -92,24 +97,21 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
     }
   }
 
-  @HostListener('touchcancel', ['$event'])
   onTouchCancel(event: TouchEvent): void {
     this.isDragging = false;
   }
 
-  // Mouse Events (für Desktop)
-  @HostListener('mousedown', ['$event'])
+  // Mouse Events (for desktop)
   onMouseDown(event: MouseEvent): void {
-    // Nur linke Maustaste
+    // Only left mouse button
     if (event.button !== 0) {
       return;
     }
 
     this.startGesture(event.clientX, event.clientY);
-    event.preventDefault(); // Verhindere Text-Selektion
+    event.preventDefault(); // Prevent text selection
   }
 
-  @HostListener('document:mousemove', ['$event'])
   onMouseMove(event: MouseEvent): void {
     if (!this.isDragging) {
       return;
@@ -118,13 +120,12 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
     const deltaX = Math.abs(event.clientX - this.startX);
     const deltaY = Math.abs(event.clientY - this.startY);
 
-    // Zeige visuelles Feedback durch Cursor
+    // Show visual feedback through cursor
     if (deltaX > deltaY && deltaX > 10) {
       this.elementRef.nativeElement.style.cursor = 'grabbing';
     }
   }
 
-  @HostListener('document:mouseup', ['$event'])
   onMouseUp(event: MouseEvent): void {
     if (!this.isDragging) {
       return;
@@ -134,7 +135,7 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
     this.elementRef.nativeElement.style.cursor = '';
   }
 
-  // Gemeinsame Logik für Touch und Mouse
+  // Common logic for touch and mouse
   private startGesture(x: number, y: number): void {
     this.startX = x;
     this.startY = y;
@@ -153,24 +154,24 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
     const absDeltaX = Math.abs(deltaX);
     const absDeltaY = Math.abs(deltaY);
 
-    // Prüfe ob Bewegung primär horizontal war
+    // Check if movement was primarily horizontal
     if (absDeltaX < absDeltaY) {
       this.isDragging = false;
-      return; // Vertikale Bewegung, ignorieren
+      return; // Vertical movement, ignore
     }
 
-    // Berechne Geschwindigkeit (Pixel pro Millisekunde)
+    // Calculate velocity (pixels per millisecond)
     const velocity = absDeltaX / (deltaTime || 1);
 
-    // Prüfe ob Schwellenwerte erreicht wurden
+    // Check if thresholds were met
     const isSwipe = absDeltaX > this.swipeThreshold || velocity > this.swipeVelocityThreshold;
 
     if (isSwipe) {
       if (deltaX > 0) {
-        // Swipe nach rechts -> Zurück
+        // Swipe right -> Previous
         this.navigatePrevious();
       } else {
-        // Swipe nach links -> Vor
+        // Swipe left -> Next
         this.navigateNext();
       }
     }
@@ -183,7 +184,7 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
       return;
     }
 
-    // Nutze die öffentliche API von MatTabGroup
+    // Use the public API of MatTabGroup
     const currentIndex = this.tabGroup.selectedIndex || 0;
     const maxIndex = (this.tabGroup._tabs?.length || 1) - 1;
 
@@ -197,7 +198,7 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
       return;
     }
 
-    // Nutze die öffentliche API von MatTabGroup
+    // Use the public API of MatTabGroup
     const currentIndex = this.tabGroup.selectedIndex || 0;
 
     if (currentIndex > 0) {

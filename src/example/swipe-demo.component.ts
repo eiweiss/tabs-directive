@@ -4,9 +4,9 @@ import { CommonModule } from '@angular/common';
 import { SwipeNavigationDirective } from '../directives/swipe-navigation.directive';
 
 /**
- * Demo-Komponente für die SwipeNavigationDirective
+ * Demo component for the SwipeNavigationDirective
  *
- * Zeigt Swipe-Navigation für Angular Material Tabs
+ * Demonstrates swipe navigation for Angular Material Tabs
  */
 @Component({
   selector: 'app-swipe-demo',
@@ -20,52 +20,52 @@ import { SwipeNavigationDirective } from '../directives/swipe-navigation.directi
     <div class="demo-container">
       <h1>Tabs Swipe Navigation</h1>
       <p class="demo-hint">
-        💡 Tipp: Swipe mit dem Finger oder ziehe mit der Maus nach links/rechts
+        💡 Tip: Swipe with your finger or drag with the mouse left/right
       </p>
 
-      <!-- Tabs Beispiel -->
+      <!-- Tabs Example -->
       <section class="demo-section">
         <mat-tab-group
           appSwipeNavigation
           class="swipe-enabled"
           [selectedIndex]="selectedTabIndex"
           (selectedIndexChange)="selectedTabIndex = $event">
-          <mat-tab label="Erste Tab">
+          <mat-tab label="First Tab">
             <div class="tab-content">
-              <h3>Willkommen auf der ersten Tab</h3>
-              <p>Swipe nach links oder ziehe mit der Maus nach links, um zur nächsten Tab zu gelangen.</p>
+              <h3>Welcome to the first tab</h3>
+              <p>Swipe left or drag with the mouse to the left to go to the next tab.</p>
             </div>
           </mat-tab>
-          <mat-tab label="Zweite Tab">
+          <mat-tab label="Second Tab">
             <div class="tab-content">
-              <h3>Das ist die zweite Tab</h3>
-              <p>Du kannst nach links oder rechts swipen/ziehen, um zwischen den Tabs zu navigieren.</p>
+              <h3>This is the second tab</h3>
+              <p>You can swipe/drag left or right to navigate between tabs.</p>
             </div>
           </mat-tab>
-          <mat-tab label="Dritte Tab">
+          <mat-tab label="Third Tab">
             <div class="tab-content">
-              <h3>Die dritte Tab</h3>
-              <p>Swipe nach rechts oder ziehe nach rechts, um zurück zu gehen.</p>
+              <h3>The third tab</h3>
+              <p>Swipe right or drag to the right to go back.</p>
             </div>
           </mat-tab>
-          <mat-tab label="Vierte Tab">
+          <mat-tab label="Fourth Tab">
             <div class="tab-content">
-              <h3>Letzte Tab</h3>
-              <p>Das ist die letzte Tab. Swipe funktioniert nur innerhalb der verfügbaren Tabs.</p>
+              <h3>Last tab</h3>
+              <p>This is the last tab. Swipe only works within the available tabs.</p>
             </div>
           </mat-tab>
         </mat-tab-group>
-        <p class="current-info">Aktuelle Tab: {{ selectedTabIndex + 1 }} von 4</p>
+        <p class="current-info">Current tab: {{ selectedTabIndex + 1 }} of 4</p>
       </section>
 
-      <!-- Informationen -->
+      <!-- Information -->
       <section class="demo-section info-section">
-        <h3>Wie funktioniert's?</h3>
+        <h3>How does it work?</h3>
         <ul>
-          <li><strong>Touch-Geräte:</strong> Swipe mit dem Finger nach links/rechts</li>
-          <li><strong>Desktop:</strong> Klicke und ziehe mit der Maus nach links/rechts</li>
-          <li><strong>Schwellenwert:</strong> Mindestens 50px Bewegung oder schnelle Geste</li>
-          <li><strong>Angular Material API:</strong> Verwendet nur die öffentliche selectedIndex API</li>
+          <li><strong>Touch devices:</strong> Swipe with your finger left/right</li>
+          <li><strong>Desktop:</strong> Click and drag with the mouse left/right</li>
+          <li><strong>Threshold:</strong> At least 50px movement or fast gesture</li>
+          <li><strong>Angular Material API:</strong> Uses only the public selectedIndex API</li>
         </ul>
       </section>
     </div>
