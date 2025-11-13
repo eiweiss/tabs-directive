@@ -81,6 +81,8 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
   private clickInterval = 100; // Click pagination button every 100px of drag
 
   ngOnInit(): void {
+    console.log('=== SwipeNavigationDirective ngOnInit START ===');
+
     // Validate that MatTabGroup is present
     if (!this.tabGroup) {
       console.warn(
@@ -89,9 +91,11 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
       );
       return;
     }
+    console.log('✓ MatTabGroup found');
 
     // Find the tab header element
     this.tabHeaderElement = this.elementRef.nativeElement.querySelector('.mat-mdc-tab-header');
+    console.log('Tab header element:', this.tabHeaderElement);
 
     if (!this.tabHeaderElement) {
       console.warn(
@@ -100,6 +104,7 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
       );
       return;
     }
+    console.log('✓ Tab header element found');
 
     // Find the scrollable tab list container
     // Try different possible selectors for Angular Material's scrollable element
@@ -133,8 +138,10 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
         'SwipeNavigationDirective: Scrollable tab list not found. ' +
         'Swipe functionality may not work correctly.'
       );
+      console.log('=== EARLY RETURN: No scrollable container ===');
       return;
     }
+    console.log('✓ Scrollable container found');
 
     // Find pagination buttons
     this.paginationBefore = this.tabHeaderElement.querySelector('.mat-mdc-tab-header-pagination-before') as HTMLElement;
@@ -153,9 +160,15 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
     this.renderer.setStyle(this.tabHeaderElement, 'cursor', 'grab');
     this.renderer.setStyle(this.tabHeaderElement, 'user-select', 'none');
 
+    console.log('✓ Styles applied (cursor: grab)');
+
     // Setup reactive event streams
+    console.log('Setting up touch gestures...');
     this.setupTouchGestures();
+    console.log('Setting up mouse gestures...');
     this.setupMouseGestures();
+
+    console.log('=== SwipeNavigationDirective INITIALIZATION COMPLETE ===');
   }
 
   ngOnDestroy(): void {
@@ -168,7 +181,10 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
    * Setup touch gesture streams with RxJS
    */
   private setupTouchGestures(): void {
-    if (!this.tabHeaderElement) return;
+    if (!this.tabHeaderElement) {
+      console.warn('Cannot setup touch gestures: tabHeaderElement is null');
+      return;
+    }
 
     const touchStart$ = fromEvent<TouchEvent>(this.tabHeaderElement, 'touchstart', { passive: false }).pipe(
       tap(() => console.log('Touch start detected')),
@@ -241,14 +257,18 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
         )
       )),
       takeUntil(this.destroy$)
-    ).subscribe();
+    ).subscribe(() => {}, error => console.error('Touch gesture error:', error));
+    console.log('✓ Touch gesture stream subscribed');
   }
 
   /**
    * Setup mouse gesture streams with RxJS
    */
   private setupMouseGestures(): void {
-    if (!this.tabHeaderElement) return;
+    if (!this.tabHeaderElement) {
+      console.warn('Cannot setup mouse gestures: tabHeaderElement is null');
+      return;
+    }
 
     const mouseDown$ = fromEvent<MouseEvent>(this.tabHeaderElement, 'mousedown').pipe(
       tap(e => console.log('Mouse down detected', { target: e.target, button: e.button })),
@@ -326,7 +346,8 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
         })
       )),
       takeUntil(this.destroy$)
-    ).subscribe();
+    ).subscribe(() => {}, error => console.error('Mouse gesture error:', error));
+    console.log('✓ Mouse gesture stream subscribed');
   }
 
   /**
