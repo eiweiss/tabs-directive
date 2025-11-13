@@ -1,19 +1,19 @@
-# Tabs Swipe Navigation Directive for Angular Material
+# Tab Header Scroll Directive for Angular Material
 
-An Angular directive that enables touch-swipe and mouse-drag navigation for Angular Material Tabs.
+An Angular directive that enables touch-swipe and mouse-drag scrolling through Angular Material Tab headers.
 
 [Edit in StackBlitz next generation editor ⚡️](https://stackblitz.com/~/github.com/eiweiss/tabs-directive)
 
 ## Features
 
+- ✅ **Header Scrolling** - scrolls through tab headers when there are many tabs, NOT changing the selected tab
+- ✅ **Replace Pagination Arrows** - swipe instead of clicking left/right arrows multiple times
 - ✅ **Reactive Programming** - built with RxJS observables and operators for clean, declarative code
 - ✅ **Swipe gestures** for touch devices (smartphones, tablets)
 - ✅ **Mouse drag** for desktop devices
-- ✅ Supports **MatTabGroup** (Tabs)
-- ✅ **Header-only functionality** - swipe only works on the tab header, not in the tab content
-- ✅ **Reactive visual feedback** - opacity changes during swipe/drag for better UX
+- ✅ **Direct scrolling** - dragging follows your finger/mouse position
+- ✅ **Momentum scrolling** - fast swipes continue scrolling smoothly
 - ✅ **Memory leak safe** - automatic cleanup with takeUntil and destroy$
-- ✅ **No internal calculations are affected** - uses only the public selectedIndex API
 - ✅ Configurable thresholds for swipe distance and velocity
 - ✅ Standalone Directive (Angular 20)
 
@@ -59,16 +59,17 @@ The directive offers two configurable parameters:
 
 ## How it works
 
+When you have many tabs in a `mat-tab-group`, Angular Material shows pagination arrows to navigate through the tab headers. This directive allows you to **swipe/drag the tab headers** to scroll through them, instead of clicking the arrows multiple times.
+
 The directive uses **Reactive Programming with RxJS**:
 
-1. **Event Streams** - Creates observable streams from touch and mouse events using `fromEvent`
-2. **Reactive Operators** - Uses RxJS operators like `switchMap`, `takeUntil`, `filter`, `map`, `tap`, `merge`
-3. **Declarative Composition** - Gesture logic is composed from observable streams
-4. **Automatic Cleanup** - All subscriptions are automatically cleaned up with `takeUntil(destroy$)`
-5. **Header-only Area** - Only responds to events in the tab header, not in the tab content
-6. **Visual Feedback** - The tab header opacity changes during swipe/drag to indicate the gesture
+1. **Header Scrolling** - Scrolls the tab header container (`.mat-mdc-tab-list`), NOT changing the selected tab
+2. **Event Streams** - Creates observable streams from touch and mouse events using `fromEvent`
+3. **Reactive Operators** - Uses RxJS operators like `switchMap`, `takeUntil`, `filter`, `map`, `tap`, `merge`
+4. **Direct Follow** - During drag, the headers follow your finger/mouse position
+5. **Momentum** - Fast swipes continue scrolling with smooth animation
+6. **Automatic Cleanup** - All subscriptions are automatically cleaned up with `takeUntil(destroy$)`
 7. **Horizontal Gestures** - Recognizes horizontal swipe/drag gestures, ignores vertical movements
-8. **Public API Only** - Uses only `MatTabGroup.selectedIndex`, does not interfere with internal calculations
 
 ## Demo
 
@@ -80,9 +81,10 @@ npm start
 ```
 
 The demo shows:
-- Swipe navigation for tabs (header only)
+- 20 tabs with pagination arrows
+- Swipe/drag to scroll through tab headers
 - Touch and mouse interactions
-- Reactive visual feedback during gestures
+- Momentum scrolling on fast swipes
 
 ## Browser Compatibility
 

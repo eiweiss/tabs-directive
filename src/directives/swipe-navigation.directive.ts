@@ -45,16 +45,17 @@ interface GestureEnd {
 }
 
 /**
- * Directive for swipe and drag navigation on Angular Material Tabs
+ * Directive for swipe and drag navigation on Angular Material Tab Headers
  *
  * Usage:
  * <mat-tab-group appSwipeNavigation>...</mat-tab-group>
  *
- * This directive uses reactive programming with RxJS for event handling.
- * It uses only the public Angular Material API and does not interfere
- * with internal calculations.
+ * This directive allows scrolling through the tab header list via swipe/drag gestures.
+ * When there are many tabs and pagination arrows appear, you can swipe to scroll
+ * through the headers instead of clicking the arrows multiple times.
  *
- * Swipe functionality is restricted to the tab header area only.
+ * This directive uses reactive programming with RxJS for event handling.
+ * It scrolls the tab header container, NOT changing the selected tab.
  */
 @Directive({
   selector: '[appSwipeNavigation]',
@@ -72,6 +73,8 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
   // Reactive state management
   private destroy$ = new Subject<void>();
   private tabHeaderElement: HTMLElement | null = null;
+  private scrollableContainer: HTMLElement | null = null;
+  private lastDeltaX = 0;
 
   ngOnInit(): void {
     // Validate that MatTabGroup is present
@@ -89,6 +92,17 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
     if (!this.tabHeaderElement) {
       console.warn(
         'SwipeNavigationDirective: Tab header element not found. ' +
+        'Swipe functionality may not work correctly.'
+      );
+      return;
+    }
+
+    // Find the scrollable tab list container
+    this.scrollableContainer = this.tabHeaderElement.querySelector('.mat-mdc-tab-list');
+
+    if (!this.scrollableContainer) {
+      console.warn(
+        'SwipeNavigationDirective: Scrollable tab list not found. ' +
         'Swipe functionality may not work correctly.'
       );
       return;
@@ -148,8 +162,8 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
           return absDeltaX > absDeltaY && absDeltaX > 10;
         }),
         tap(move => {
-          // Update visual feedback
-          this.updateVisualFeedback(move.deltaX);
+          // Scroll the tab header container
+          this.scrollTabHeaders(move.deltaX);
         }),
         takeUntil(
           merge(touchEnd$, touchCancel$).pipe(
@@ -171,7 +185,7 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
               } as GestureEnd;
             }),
             tap(end => {
-              this.resetVisualFeedback();
+              this.resetScroll();
               if (end) {
                 this.handleGestureEnd(end);
               }
@@ -222,8 +236,8 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
           if (this.tabHeaderElement) {
             this.renderer.setStyle(this.tabHeaderElement, 'cursor', 'grabbing');
           }
-          // Update visual feedback
-          this.updateVisualFeedback(move.deltaX);
+          // Scroll the tab header container
+          this.scrollTabHeaders(move.deltaX);
         }),
         takeUntil(
           mouseUp$.pipe(
@@ -246,7 +260,7 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
               if (this.tabHeaderElement) {
                 this.renderer.removeStyle(this.tabHeaderElement, 'cursor');
               }
-              this.resetVisualFeedback();
+              this.resetScroll();
               this.handleGestureEnd(end);
             })
           )
@@ -266,6 +280,8 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
    * Handle gesture end - determine if swipe threshold met
    */
   private handleGestureEnd(end: GestureEnd): void {
+    if (!this.scrollableContainer) return;
+
     const absDeltaX = Math.abs(end.deltaX);
     const absDeltaY = Math.abs(end.deltaY);
 
@@ -274,18 +290,42 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
       return; // Vertical movement, ignore
     }
 
-    // Check if thresholds were met
+    // Check if thresholds were met for a flick/fast swipe
     const isSwipe = absDeltaX > this.swipeThreshold || end.velocity > this.swipeVelocityThreshold;
 
     if (isSwipe) {
-      if (end.deltaX > 0) {
-        // Swipe right -> Previous
-        this.navigatePrevious();
-      } else {
-        // Swipe left -> Next
-        this.navigateNext();
-      }
+      // Smooth scroll animation for fast swipes
+      const scrollDistance = end.deltaX * 2; // Amplify the scroll
+      const targetScroll = this.scrollableContainer.scrollLeft - scrollDistance;
+
+      this.scrollableContainer.scrollTo({
+        left: targetScroll,
+        behavior: 'smooth'
+      });
     }
+  }
+
+  /**
+   * Scroll tab headers during drag/swipe
+   */
+  private scrollTabHeaders(deltaX: number): void {
+    if (!this.scrollableContainer) return;
+
+    // Calculate incremental movement (only the change since last update)
+    const incrementalDelta = deltaX - this.lastDeltaX;
+    this.lastDeltaX = deltaX;
+
+    // Scroll in opposite direction of finger/mouse movement
+    // (like native scrolling behavior)
+    this.scrollableContainer.scrollLeft -= incrementalDelta;
+  }
+
+  /**
+   * Reset scroll state
+   */
+  private resetScroll(): void {
+    // Reset tracking for next gesture
+    this.lastDeltaX = 0;
   }
 
   /**
@@ -298,78 +338,5 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
 
     // Check if target is the header itself or a child of the header
     return this.tabHeaderElement === target || this.tabHeaderElement.contains(target);
-  }
-
-  /**
-   * Update visual feedback during swipe/drag
-   */
-  private updateVisualFeedback(deltaX: number): void {
-    if (!this.tabHeaderElement || !this.tabGroup) {
-      return;
-    }
-
-    const currentIndex = this.tabGroup.selectedIndex || 0;
-    const maxIndex = (this.tabGroup._tabs?.length || 1) - 1;
-
-    // Calculate opacity based on swipe distance (more subtle feedback)
-    const maxDistance = 100;
-    const normalizedDistance = Math.min(Math.abs(deltaX) / maxDistance, 1);
-
-    // Determine direction and check boundaries
-    const canSwipeLeft = deltaX < 0 && currentIndex < maxIndex;
-    const canSwipeRight = deltaX > 0 && currentIndex > 0;
-
-    if (canSwipeLeft || canSwipeRight) {
-      // Subtle opacity change: 1.0 to 0.85
-      const opacity = 1 - (normalizedDistance * 0.15);
-      this.renderer.setStyle(this.tabHeaderElement, 'opacity', opacity.toString());
-      this.renderer.setStyle(this.tabHeaderElement, 'transition', 'none');
-    }
-  }
-
-  /**
-   * Reset visual feedback
-   */
-  private resetVisualFeedback(): void {
-    if (!this.tabHeaderElement) {
-      return;
-    }
-
-    this.renderer.setStyle(this.tabHeaderElement, 'transition', 'opacity 0.2s ease');
-    this.renderer.setStyle(this.tabHeaderElement, 'opacity', '1');
-
-    // Remove transition after animation completes
-    setTimeout(() => {
-      if (this.tabHeaderElement) {
-        this.renderer.removeStyle(this.tabHeaderElement, 'transition');
-      }
-    }, 200);
-  }
-
-  private navigateNext(): void {
-    if (!this.tabGroup) {
-      return;
-    }
-
-    // Use the public API of MatTabGroup
-    const currentIndex = this.tabGroup.selectedIndex || 0;
-    const maxIndex = (this.tabGroup._tabs?.length || 1) - 1;
-
-    if (currentIndex < maxIndex) {
-      this.tabGroup.selectedIndex = currentIndex + 1;
-    }
-  }
-
-  private navigatePrevious(): void {
-    if (!this.tabGroup) {
-      return;
-    }
-
-    // Use the public API of MatTabGroup
-    const currentIndex = this.tabGroup.selectedIndex || 0;
-
-    if (currentIndex > 0) {
-      this.tabGroup.selectedIndex = currentIndex - 1;
-    }
   }
 }
