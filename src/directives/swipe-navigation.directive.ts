@@ -1,3 +1,11 @@
+/**
+ * @license
+ * Copyright (c) 2025 CWOIDA
+ *
+ * This file is part of CNGX (Composable Angular Extension).
+ * Licensed under the MIT License. See LICENSE file in the project root.
+ */
+
 import {
   Directive,
   ElementRef,
