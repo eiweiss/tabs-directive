@@ -1,6 +1,9 @@
 {
   "name": "example-app",
   "version": "0.0.0",
+  "license": "MIT",
+  "author": "CWOIDA",
+  "description": "CNGX (Composable Angular Extension) - Swipe Navigation Directive for Angular Material Tabs",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
