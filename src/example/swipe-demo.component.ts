@@ -7,6 +7,7 @@ import { SwipeNavigationDirective } from '../directives/swipe-navigation.directi
  * Demo component for the SwipeNavigationDirective
  *
  * Demonstrates swipe navigation for Angular Material Tabs
+ * using Reactive Programming with RxJS
  */
 @Component({
   selector: 'app-swipe-demo',
@@ -66,11 +67,13 @@ import { SwipeNavigationDirective } from '../directives/swipe-navigation.directi
       <section class="demo-section info-section">
         <h3>How does it work?</h3>
         <ul>
+          <li><strong>Reactive Programming:</strong> Built with RxJS observables and operators (fromEvent, switchMap, takeUntil, etc.)</li>
           <li><strong>Header only:</strong> Swipe/drag only works on the tab header, not in the tab content</li>
           <li><strong>Touch devices:</strong> Swipe with your finger left/right on the header</li>
           <li><strong>Desktop:</strong> Click and drag with the mouse left/right on the header</li>
           <li><strong>Visual feedback:</strong> The header opacity changes during the gesture for reactive feedback</li>
           <li><strong>Threshold:</strong> At least 50px movement or fast gesture</li>
+          <li><strong>Memory safe:</strong> Automatic cleanup with takeUntil pattern prevents memory leaks</li>
           <li><strong>Angular Material API:</strong> Uses only the public selectedIndex API</li>
         </ul>
       </section>
