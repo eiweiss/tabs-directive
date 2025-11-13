@@ -108,6 +108,17 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
       return;
     }
 
+    console.log('SwipeNavigationDirective initialized:', {
+      tabHeaderElement: this.tabHeaderElement,
+      scrollableContainer: this.scrollableContainer,
+      scrollWidth: this.scrollableContainer.scrollWidth,
+      clientWidth: this.scrollableContainer.clientWidth
+    });
+
+    // Set cursor to grab to indicate draggability
+    this.renderer.setStyle(this.tabHeaderElement, 'cursor', 'grab');
+    this.renderer.setStyle(this.tabHeaderElement, 'user-select', 'none');
+
     // Setup reactive event streams
     this.setupTouchGestures();
     this.setupMouseGestures();
@@ -125,14 +136,16 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
   private setupTouchGestures(): void {
     if (!this.tabHeaderElement) return;
 
-    const touchStart$ = fromEvent<TouchEvent>(this.tabHeaderElement, 'touchstart').pipe(
+    const touchStart$ = fromEvent<TouchEvent>(this.tabHeaderElement, 'touchstart', { passive: false }).pipe(
+      tap(() => console.log('Touch start detected')),
       filter(e => e.touches.length === 1),
       filter(e => this.isEventInTabHeader(e.target as HTMLElement)),
       map(e => ({
         x: e.touches[0].clientX,
         y: e.touches[0].clientY,
         time: Date.now()
-      } as GestureStart))
+      } as GestureStart)),
+      tap(start => console.log('Touch gesture started', start))
     );
 
     const touchMove$ = fromEvent<TouchEvent>(document, 'touchmove');
@@ -204,9 +217,13 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
     if (!this.tabHeaderElement) return;
 
     const mouseDown$ = fromEvent<MouseEvent>(this.tabHeaderElement, 'mousedown').pipe(
+      tap(e => console.log('Mouse down detected', { target: e.target, button: e.button })),
       filter(e => e.button === 0),
       filter(e => this.isEventInTabHeader(e.target as HTMLElement)),
-      tap(e => e.preventDefault()),
+      tap(e => {
+        e.preventDefault();
+        console.log('Mouse gesture started');
+      }),
       map(e => ({
         x: e.clientX,
         y: e.clientY,
@@ -237,6 +254,7 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
             this.renderer.setStyle(this.tabHeaderElement, 'cursor', 'grabbing');
           }
           // Scroll the tab header container
+          console.log('Scrolling', { deltaX: move.deltaX, scrollLeft: this.scrollableContainer?.scrollLeft });
           this.scrollTabHeaders(move.deltaX);
         }),
         takeUntil(
@@ -258,9 +276,10 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
             tap(end => {
               // Reset cursor
               if (this.tabHeaderElement) {
-                this.renderer.removeStyle(this.tabHeaderElement, 'cursor');
+                this.renderer.setStyle(this.tabHeaderElement, 'cursor', 'grab');
               }
               this.resetScroll();
+              console.log('Mouse gesture ended', end);
               this.handleGestureEnd(end);
             })
           )
@@ -268,7 +287,7 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
         finalize(() => {
           // Cleanup on stream completion
           if (this.tabHeaderElement) {
-            this.renderer.removeStyle(this.tabHeaderElement, 'cursor');
+            this.renderer.setStyle(this.tabHeaderElement, 'cursor', 'grab');
           }
         })
       )),
