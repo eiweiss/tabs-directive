@@ -3,7 +3,7 @@ import {
   ElementRef,
   Input,
   OnDestroy,
-  OnInit,
+  AfterViewInit,
   Renderer2,
   inject
 } from '@angular/core';
@@ -61,7 +61,7 @@ interface GestureEnd {
   selector: '[appSwipeNavigation]',
   standalone: true
 })
-export class SwipeNavigationDirective implements OnInit, OnDestroy {
+export class SwipeNavigationDirective implements AfterViewInit, OnDestroy {
   private elementRef = inject(ElementRef);
   private renderer = inject(Renderer2);
   private tabGroup = inject(MatTabGroup, { optional: true });
@@ -75,8 +75,12 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
   private tabHeaderElement: HTMLElement | null = null;
   private scrollableContainer: HTMLElement | null = null;
   private lastDeltaX = 0;
+  private paginationBefore: HTMLElement | null = null;
+  private paginationAfter: HTMLElement | null = null;
+  private lastClickThreshold = 0; // Track when we last clicked
+  private clickInterval = 100; // Click pagination button every 100px of drag
 
-  ngOnInit(): void {
+  ngAfterViewInit(): void {
     // Validate that MatTabGroup is present
     if (!this.tabGroup) {
       console.warn(
@@ -98,7 +102,22 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
     }
 
     // Find the scrollable tab list container
-    this.scrollableContainer = this.tabHeaderElement.querySelector('.mat-mdc-tab-list');
+    // Try different possible selectors for Angular Material's scrollable element
+    let possibleSelectors = [
+      '.mat-mdc-tab-list',
+      '.mat-mdc-tab-labels',
+      '.mat-mdc-tab-label-container'
+    ];
+
+    for (const selector of possibleSelectors) {
+      const element = this.tabHeaderElement.querySelector(selector) as HTMLElement;
+      if (element) {
+        // Use the first found element - don't check if scrollable yet
+        // Angular Material may calculate sizes after view init
+        this.scrollableContainer = element;
+        break;
+      }
+    }
 
     if (!this.scrollableContainer) {
       console.warn(
@@ -107,6 +126,14 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
       );
       return;
     }
+
+    // Find pagination buttons
+    this.paginationBefore = this.tabHeaderElement.querySelector('.mat-mdc-tab-header-pagination-before') as HTMLElement;
+    this.paginationAfter = this.tabHeaderElement.querySelector('.mat-mdc-tab-header-pagination-after') as HTMLElement;
+
+    // Set cursor to grab to indicate draggability
+    this.renderer.setStyle(this.tabHeaderElement, 'cursor', 'grab');
+    this.renderer.setStyle(this.tabHeaderElement, 'user-select', 'none');
 
     // Setup reactive event streams
     this.setupTouchGestures();
@@ -123,9 +150,12 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
    * Setup touch gesture streams with RxJS
    */
   private setupTouchGestures(): void {
-    if (!this.tabHeaderElement) return;
+    if (!this.tabHeaderElement) {
+      console.warn('Cannot setup touch gestures: tabHeaderElement is null');
+      return;
+    }
 
-    const touchStart$ = fromEvent<TouchEvent>(this.tabHeaderElement, 'touchstart').pipe(
+    const touchStart$ = fromEvent<TouchEvent>(this.tabHeaderElement, 'touchstart', { passive: false }).pipe(
       filter(e => e.touches.length === 1),
       filter(e => this.isEventInTabHeader(e.target as HTMLElement)),
       map(e => ({
@@ -194,14 +224,17 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
         )
       )),
       takeUntil(this.destroy$)
-    ).subscribe();
+    ).subscribe(() => {}, error => console.error('Touch gesture error:', error));
   }
 
   /**
    * Setup mouse gesture streams with RxJS
    */
   private setupMouseGestures(): void {
-    if (!this.tabHeaderElement) return;
+    if (!this.tabHeaderElement) {
+      console.warn('Cannot setup mouse gestures: tabHeaderElement is null');
+      return;
+    }
 
     const mouseDown$ = fromEvent<MouseEvent>(this.tabHeaderElement, 'mousedown').pipe(
       filter(e => e.button === 0),
@@ -258,7 +291,7 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
             tap(end => {
               // Reset cursor
               if (this.tabHeaderElement) {
-                this.renderer.removeStyle(this.tabHeaderElement, 'cursor');
+                this.renderer.setStyle(this.tabHeaderElement, 'cursor', 'grab');
               }
               this.resetScroll();
               this.handleGestureEnd(end);
@@ -268,20 +301,18 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
         finalize(() => {
           // Cleanup on stream completion
           if (this.tabHeaderElement) {
-            this.renderer.removeStyle(this.tabHeaderElement, 'cursor');
+            this.renderer.setStyle(this.tabHeaderElement, 'cursor', 'grab');
           }
         })
       )),
       takeUntil(this.destroy$)
-    ).subscribe();
+    ).subscribe(() => {}, error => console.error('Mouse gesture error:', error));
   }
 
   /**
    * Handle gesture end - determine if swipe threshold met
    */
   private handleGestureEnd(end: GestureEnd): void {
-    if (!this.scrollableContainer) return;
-
     const absDeltaX = Math.abs(end.deltaX);
     const absDeltaY = Math.abs(end.deltaY);
 
@@ -290,34 +321,82 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
       return; // Vertical movement, ignore
     }
 
-    // Check if thresholds were met for a flick/fast swipe
-    const isSwipe = absDeltaX > this.swipeThreshold || end.velocity > this.swipeVelocityThreshold;
+    // Check if this was a fast flick (high velocity, short distance)
+    // This adds momentum for quick swipes that didn't cover much distance
+    const isFastFlick = end.velocity > this.swipeVelocityThreshold && absDeltaX < this.clickInterval;
 
-    if (isSwipe) {
-      // Smooth scroll animation for fast swipes
-      const scrollDistance = end.deltaX * 2; // Amplify the scroll
-      const targetScroll = this.scrollableContainer.scrollLeft - scrollDistance;
+    if (isFastFlick) {
+      const direction = end.deltaX > 0 ? 'before' : 'after';
 
-      this.scrollableContainer.scrollTo({
-        left: targetScroll,
-        behavior: 'smooth'
-      });
+      // For fast flicks, add 2 extra clicks for momentum
+      this.clickPaginationButton(direction);
+      setTimeout(() => this.clickPaginationButton(direction), 100);
     }
   }
 
   /**
-   * Scroll tab headers during drag/swipe
+   * Simulate a click on pagination button using native MouseEvent
+   */
+  private clickPaginationButton(direction: 'before' | 'after'): void {
+    const button = direction === 'before' ? this.paginationBefore : this.paginationAfter;
+
+    if (!button) {
+      return;
+    }
+
+    // Check if button is disabled
+    if (button.hasAttribute('disabled') || button.classList.contains('mat-mdc-tab-header-pagination-disabled')) {
+      return;
+    }
+
+    // Dispatch native mouse events that Angular Material listens to
+    const mouseDownEvent = new MouseEvent('mousedown', {
+      bubbles: true,
+      cancelable: true,
+      view: window,
+      button: 0
+    });
+    const mouseUpEvent = new MouseEvent('mouseup', {
+      bubbles: true,
+      cancelable: true,
+      view: window,
+      button: 0
+    });
+    const clickEvent = new MouseEvent('click', {
+      bubbles: true,
+      cancelable: true,
+      view: window,
+      button: 0
+    });
+
+    button.dispatchEvent(mouseDownEvent);
+    button.dispatchEvent(mouseUpEvent);
+    button.dispatchEvent(clickEvent);
+  }
+
+  /**
+   * Scroll tab headers during drag/swipe by clicking pagination buttons
    */
   private scrollTabHeaders(deltaX: number): void {
-    if (!this.scrollableContainer) return;
+    // Calculate total absolute distance dragged
+    const absDeltaX = Math.abs(deltaX);
 
-    // Calculate incremental movement (only the change since last update)
-    const incrementalDelta = deltaX - this.lastDeltaX;
-    this.lastDeltaX = deltaX;
+    // Determine direction (positive deltaX = swipe right = scroll left/before)
+    const direction = deltaX > 0 ? 'before' : 'after';
 
-    // Scroll in opposite direction of finger/mouse movement
-    // (like native scrolling behavior)
-    this.scrollableContainer.scrollLeft -= incrementalDelta;
+    // Check if we've crossed a new click threshold
+    const currentThreshold = Math.floor(absDeltaX / this.clickInterval);
+
+    if (currentThreshold > this.lastClickThreshold) {
+      // We've moved another clickInterval pixels, click the button
+      const clicksNeeded = currentThreshold - this.lastClickThreshold;
+
+      for (let i = 0; i < clicksNeeded; i++) {
+        this.clickPaginationButton(direction);
+      }
+
+      this.lastClickThreshold = currentThreshold;
+    }
   }
 
   /**
@@ -326,6 +405,7 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
   private resetScroll(): void {
     // Reset tracking for next gesture
     this.lastDeltaX = 0;
+    this.lastClickThreshold = 0;
   }
 
   /**
