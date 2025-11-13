@@ -81,8 +81,6 @@ export class SwipeNavigationDirective implements AfterViewInit, OnDestroy {
   private clickInterval = 100; // Click pagination button every 100px of drag
 
   ngAfterViewInit(): void {
-    console.log('=== SwipeNavigationDirective ngAfterViewInit START ===');
-
     // Validate that MatTabGroup is present
     if (!this.tabGroup) {
       console.warn(
@@ -91,11 +89,9 @@ export class SwipeNavigationDirective implements AfterViewInit, OnDestroy {
       );
       return;
     }
-    console.log('✓ MatTabGroup found');
 
     // Find the tab header element
     this.tabHeaderElement = this.elementRef.nativeElement.querySelector('.mat-mdc-tab-header');
-    console.log('Tab header element:', this.tabHeaderElement);
 
     if (!this.tabHeaderElement) {
       console.warn(
@@ -104,7 +100,6 @@ export class SwipeNavigationDirective implements AfterViewInit, OnDestroy {
       );
       return;
     }
-    console.log('✓ Tab header element found');
 
     // Find the scrollable tab list container
     // Try different possible selectors for Angular Material's scrollable element
@@ -117,17 +112,9 @@ export class SwipeNavigationDirective implements AfterViewInit, OnDestroy {
     for (const selector of possibleSelectors) {
       const element = this.tabHeaderElement.querySelector(selector) as HTMLElement;
       if (element) {
-        console.log(`Found element with selector: ${selector}`, {
-          scrollWidth: element.scrollWidth,
-          clientWidth: element.clientWidth,
-          overflow: getComputedStyle(element).overflow,
-          overflowX: getComputedStyle(element).overflowX
-        });
-
         // Use the first found element - don't check if scrollable yet
         // Angular Material may calculate sizes after view init
         this.scrollableContainer = element;
-        console.log(`Using ${selector} as scrollable container`);
         break;
       }
     }
@@ -137,37 +124,20 @@ export class SwipeNavigationDirective implements AfterViewInit, OnDestroy {
         'SwipeNavigationDirective: Scrollable tab list not found. ' +
         'Swipe functionality may not work correctly.'
       );
-      console.log('=== EARLY RETURN: No scrollable container ===');
       return;
     }
-    console.log('✓ Scrollable container found');
 
     // Find pagination buttons
     this.paginationBefore = this.tabHeaderElement.querySelector('.mat-mdc-tab-header-pagination-before') as HTMLElement;
     this.paginationAfter = this.tabHeaderElement.querySelector('.mat-mdc-tab-header-pagination-after') as HTMLElement;
 
-    console.log('SwipeNavigationDirective initialized:', {
-      tabHeaderElement: this.tabHeaderElement,
-      scrollableContainer: this.scrollableContainer,
-      scrollWidth: this.scrollableContainer.scrollWidth,
-      clientWidth: this.scrollableContainer.clientWidth,
-      hasPaginationBefore: !!this.paginationBefore,
-      hasPaginationAfter: !!this.paginationAfter
-    });
-
     // Set cursor to grab to indicate draggability
     this.renderer.setStyle(this.tabHeaderElement, 'cursor', 'grab');
     this.renderer.setStyle(this.tabHeaderElement, 'user-select', 'none');
 
-    console.log('✓ Styles applied (cursor: grab)');
-
     // Setup reactive event streams
-    console.log('Setting up touch gestures...');
     this.setupTouchGestures();
-    console.log('Setting up mouse gestures...');
     this.setupMouseGestures();
-
-    console.log('=== SwipeNavigationDirective INITIALIZATION COMPLETE ===');
   }
 
   ngOnDestroy(): void {
@@ -186,15 +156,13 @@ export class SwipeNavigationDirective implements AfterViewInit, OnDestroy {
     }
 
     const touchStart$ = fromEvent<TouchEvent>(this.tabHeaderElement, 'touchstart', { passive: false }).pipe(
-      tap(() => console.log('Touch start detected')),
       filter(e => e.touches.length === 1),
       filter(e => this.isEventInTabHeader(e.target as HTMLElement)),
       map(e => ({
         x: e.touches[0].clientX,
         y: e.touches[0].clientY,
         time: Date.now()
-      } as GestureStart)),
-      tap(start => console.log('Touch gesture started', start))
+      } as GestureStart))
     );
 
     const touchMove$ = fromEvent<TouchEvent>(document, 'touchmove');
@@ -257,7 +225,6 @@ export class SwipeNavigationDirective implements AfterViewInit, OnDestroy {
       )),
       takeUntil(this.destroy$)
     ).subscribe(() => {}, error => console.error('Touch gesture error:', error));
-    console.log('✓ Touch gesture stream subscribed');
   }
 
   /**
@@ -270,13 +237,9 @@ export class SwipeNavigationDirective implements AfterViewInit, OnDestroy {
     }
 
     const mouseDown$ = fromEvent<MouseEvent>(this.tabHeaderElement, 'mousedown').pipe(
-      tap(e => console.log('Mouse down detected', { target: e.target, button: e.button })),
       filter(e => e.button === 0),
       filter(e => this.isEventInTabHeader(e.target as HTMLElement)),
-      tap(e => {
-        e.preventDefault();
-        console.log('Mouse gesture started');
-      }),
+      tap(e => e.preventDefault()),
       map(e => ({
         x: e.clientX,
         y: e.clientY,
@@ -307,7 +270,6 @@ export class SwipeNavigationDirective implements AfterViewInit, OnDestroy {
             this.renderer.setStyle(this.tabHeaderElement, 'cursor', 'grabbing');
           }
           // Scroll the tab header container
-          console.log('Scrolling', { deltaX: move.deltaX, scrollLeft: this.scrollableContainer?.scrollLeft });
           this.scrollTabHeaders(move.deltaX);
         }),
         takeUntil(
@@ -332,7 +294,6 @@ export class SwipeNavigationDirective implements AfterViewInit, OnDestroy {
                 this.renderer.setStyle(this.tabHeaderElement, 'cursor', 'grab');
               }
               this.resetScroll();
-              console.log('Mouse gesture ended', end);
               this.handleGestureEnd(end);
             })
           )
@@ -346,7 +307,6 @@ export class SwipeNavigationDirective implements AfterViewInit, OnDestroy {
       )),
       takeUntil(this.destroy$)
     ).subscribe(() => {}, error => console.error('Mouse gesture error:', error));
-    console.log('✓ Mouse gesture stream subscribed');
   }
 
   /**
@@ -367,7 +327,6 @@ export class SwipeNavigationDirective implements AfterViewInit, OnDestroy {
 
     if (isFastFlick) {
       const direction = end.deltaX > 0 ? 'before' : 'after';
-      console.log(`Fast flick detected: direction=${direction}, velocity=${end.velocity.toFixed(2)}`);
 
       // For fast flicks, add 2 extra clicks for momentum
       this.clickPaginationButton(direction);
@@ -382,17 +341,13 @@ export class SwipeNavigationDirective implements AfterViewInit, OnDestroy {
     const button = direction === 'before' ? this.paginationBefore : this.paginationAfter;
 
     if (!button) {
-      console.log(`Pagination ${direction} button not found`);
       return;
     }
 
     // Check if button is disabled
     if (button.hasAttribute('disabled') || button.classList.contains('mat-mdc-tab-header-pagination-disabled')) {
-      console.log(`Pagination ${direction} button is disabled`);
       return;
     }
-
-    console.log(`Clicking pagination ${direction} button`);
 
     // Dispatch native mouse events that Angular Material listens to
     const mouseDownEvent = new MouseEvent('mousedown', {
@@ -435,8 +390,6 @@ export class SwipeNavigationDirective implements AfterViewInit, OnDestroy {
     if (currentThreshold > this.lastClickThreshold) {
       // We've moved another clickInterval pixels, click the button
       const clicksNeeded = currentThreshold - this.lastClickThreshold;
-
-      console.log(`Crossed threshold: ${currentThreshold}, clicking ${clicksNeeded} times in direction: ${direction}`);
 
       for (let i = 0; i < clicksNeeded; i++) {
         this.clickPaginationButton(direction);
