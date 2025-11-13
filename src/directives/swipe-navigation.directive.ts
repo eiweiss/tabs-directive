@@ -75,6 +75,10 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
   private tabHeaderElement: HTMLElement | null = null;
   private scrollableContainer: HTMLElement | null = null;
   private lastDeltaX = 0;
+  private paginationBefore: HTMLElement | null = null;
+  private paginationAfter: HTMLElement | null = null;
+  private lastClickThreshold = 0; // Track when we last clicked
+  private clickInterval = 100; // Click pagination button every 100px of drag
 
   ngOnInit(): void {
     // Validate that MatTabGroup is present
@@ -132,11 +136,17 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
       return;
     }
 
+    // Find pagination buttons
+    this.paginationBefore = this.tabHeaderElement.querySelector('.mat-mdc-tab-header-pagination-before') as HTMLElement;
+    this.paginationAfter = this.tabHeaderElement.querySelector('.mat-mdc-tab-header-pagination-after') as HTMLElement;
+
     console.log('SwipeNavigationDirective initialized:', {
       tabHeaderElement: this.tabHeaderElement,
       scrollableContainer: this.scrollableContainer,
       scrollWidth: this.scrollableContainer.scrollWidth,
-      clientWidth: this.scrollableContainer.clientWidth
+      clientWidth: this.scrollableContainer.clientWidth,
+      hasPaginationBefore: !!this.paginationBefore,
+      hasPaginationAfter: !!this.paginationAfter
     });
 
     // Set cursor to grab to indicate draggability
@@ -323,8 +333,6 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
    * Handle gesture end - determine if swipe threshold met
    */
   private handleGestureEnd(end: GestureEnd): void {
-    if (!this.scrollableContainer) return;
-
     const absDeltaX = Math.abs(end.deltaX);
     const absDeltaY = Math.abs(end.deltaY);
 
@@ -333,34 +341,66 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
       return; // Vertical movement, ignore
     }
 
-    // Check if thresholds were met for a flick/fast swipe
-    const isSwipe = absDeltaX > this.swipeThreshold || end.velocity > this.swipeVelocityThreshold;
+    // Check if this was a fast flick (high velocity, short distance)
+    // This adds momentum for quick swipes that didn't cover much distance
+    const isFastFlick = end.velocity > this.swipeVelocityThreshold && absDeltaX < this.clickInterval;
 
-    if (isSwipe) {
-      // Smooth scroll animation for fast swipes
-      const scrollDistance = end.deltaX * 2; // Amplify the scroll
-      const targetScroll = this.scrollableContainer.scrollLeft - scrollDistance;
+    if (isFastFlick) {
+      const direction = end.deltaX > 0 ? 'before' : 'after';
+      console.log(`Fast flick detected: direction=${direction}, velocity=${end.velocity.toFixed(2)}`);
 
-      this.scrollableContainer.scrollTo({
-        left: targetScroll,
-        behavior: 'smooth'
-      });
+      // For fast flicks, add 2 extra clicks for momentum
+      this.clickPaginationButton(direction);
+      setTimeout(() => this.clickPaginationButton(direction), 100);
     }
   }
 
   /**
-   * Scroll tab headers during drag/swipe
+   * Simulate a click on pagination button
+   */
+  private clickPaginationButton(direction: 'before' | 'after'): void {
+    const button = direction === 'before' ? this.paginationBefore : this.paginationAfter;
+
+    if (!button) {
+      console.log(`Pagination ${direction} button not found`);
+      return;
+    }
+
+    // Check if button is disabled
+    if (button.hasAttribute('disabled') || button.classList.contains('mat-mdc-tab-header-pagination-disabled')) {
+      console.log(`Pagination ${direction} button is disabled`);
+      return;
+    }
+
+    console.log(`Clicking pagination ${direction} button`);
+    button.click();
+  }
+
+  /**
+   * Scroll tab headers during drag/swipe by clicking pagination buttons
    */
   private scrollTabHeaders(deltaX: number): void {
-    if (!this.scrollableContainer) return;
+    // Calculate total absolute distance dragged
+    const absDeltaX = Math.abs(deltaX);
 
-    // Calculate incremental movement (only the change since last update)
-    const incrementalDelta = deltaX - this.lastDeltaX;
-    this.lastDeltaX = deltaX;
+    // Determine direction (positive deltaX = swipe right = scroll left/before)
+    const direction = deltaX > 0 ? 'before' : 'after';
 
-    // Scroll in opposite direction of finger/mouse movement
-    // (like native scrolling behavior)
-    this.scrollableContainer.scrollLeft -= incrementalDelta;
+    // Check if we've crossed a new click threshold
+    const currentThreshold = Math.floor(absDeltaX / this.clickInterval);
+
+    if (currentThreshold > this.lastClickThreshold) {
+      // We've moved another clickInterval pixels, click the button
+      const clicksNeeded = currentThreshold - this.lastClickThreshold;
+
+      console.log(`Crossed threshold: ${currentThreshold}, clicking ${clicksNeeded} times in direction: ${direction}`);
+
+      for (let i = 0; i < clicksNeeded; i++) {
+        this.clickPaginationButton(direction);
+      }
+
+      this.lastClickThreshold = currentThreshold;
+    }
   }
 
   /**
@@ -369,6 +409,7 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
   private resetScroll(): void {
     // Reset tracking for next gesture
     this.lastDeltaX = 0;
+    this.lastClickThreshold = 0;
   }
 
   /**
