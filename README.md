@@ -1,6 +1,6 @@
-# Swipe Navigation Directive für Angular Material
+# Tabs Swipe Navigation Directive für Angular Material
 
-Eine Angular Directive, die Touch-Swipe und Maus-Drag Navigation für Angular Material Komponenten ermöglicht.
+Eine Angular Directive, die Touch-Swipe und Maus-Drag Navigation für Angular Material Tabs ermöglicht.
 
 [Edit in StackBlitz next generation editor ⚡️](https://stackblitz.com/~/github.com/eiweiss/tabs-directive)
 
@@ -9,8 +9,7 @@ Eine Angular Directive, die Touch-Swipe und Maus-Drag Navigation für Angular Ma
 - ✅ **Swipe-Gesten** für Touch-Geräte (Smartphones, Tablets)
 - ✅ **Drag mit der Maus** für Desktop-Geräte
 - ✅ Unterstützt **MatTabGroup** (Tabs)
-- ✅ Unterstützt **MatPaginator** (Pagination)
-- ✅ **Keine internen Berechnungen werden beeinträchtigt** - nutzt nur die öffentliche Angular Material API
+- ✅ **Keine internen Berechnungen werden beeinträchtigt** - nutzt nur die öffentliche selectedIndex API
 - ✅ Konfigurierbare Schwellenwerte für Swipe-Distanz und -Geschwindigkeit
 - ✅ Standalone Directive (Angular 20)
 
@@ -19,8 +18,6 @@ Eine Angular Directive, die Touch-Swipe und Maus-Drag Navigation für Angular Ma
 Die Directive ist bereits im Projekt enthalten unter `src/directives/swipe-navigation.directive.ts`.
 
 ## Verwendung
-
-### Mit MatTabGroup (Tabs)
 
 ```typescript
 import { MatTabsModule } from '@angular/material/tabs';
@@ -36,28 +33,6 @@ import { SwipeNavigationDirective } from './directives/swipe-navigation.directiv
       <mat-tab label="Tab 2">Inhalt 2</mat-tab>
       <mat-tab label="Tab 3">Inhalt 3</mat-tab>
     </mat-tab-group>
-  `
-})
-export class MyComponent {}
-```
-
-### Mit MatPaginator (Pagination)
-
-```typescript
-import { MatPaginatorModule } from '@angular/material/paginator';
-import { SwipeNavigationDirective } from './directives/swipe-navigation.directive';
-
-@Component({
-  selector: 'app-my-component',
-  standalone: true,
-  imports: [MatPaginatorModule, SwipeNavigationDirective],
-  template: `
-    <mat-paginator
-      appSwipeNavigation
-      [length]="100"
-      [pageSize]="10"
-      [pageSizeOptions]="[5, 10, 25, 100]">
-    </mat-paginator>
   `
 })
 export class MyComponent {}
@@ -85,9 +60,7 @@ Die Directive:
 1. Lauscht auf Touch-Events (`touchstart`, `touchmove`, `touchend`) und Mouse-Events (`mousedown`, `mousemove`, `mouseup`)
 2. Erkennt horizontale Swipe/Drag-Gesten
 3. Ignoriert vertikale Bewegungen (ermöglicht normales Scrollen)
-4. Nutzt die **öffentliche API** von Angular Material:
-   - Für Tabs: `MatTabGroup.selectedIndex`
-   - Für Paginator: `MatPaginator.nextPage()` und `previousPage()`
+4. Nutzt die **öffentliche API** von Angular Material: `MatTabGroup.selectedIndex`
 5. Beeinträchtigt **keine internen Berechnungen** von Angular Material
 
 ## Demo
@@ -101,8 +74,7 @@ npm start
 
 Die Demo zeigt:
 - Swipe-Navigation für Tabs
-- Swipe-Navigation für Pagination
-- Beispiele für beide Touch- und Maus-Interaktionen
+- Touch- und Maus-Interaktionen
 
 ## Browser-Kompatibilität
 

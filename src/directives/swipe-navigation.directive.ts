@@ -8,18 +8,12 @@ import {
   inject
 } from '@angular/core';
 import { MatTabGroup } from '@angular/material/tabs';
-import { MatPaginator } from '@angular/material/paginator';
 
 /**
- * Directive für Swipe- und Drag-Navigation auf Angular Material Komponenten
- *
- * Unterstützt:
- * - MatTabGroup (Tabs)
- * - MatPaginator (Pagination)
+ * Directive für Swipe- und Drag-Navigation auf Angular Material Tabs
  *
  * Verwendung:
  * <mat-tab-group appSwipeNavigation>...</mat-tab-group>
- * <mat-paginator appSwipeNavigation>...</mat-paginator>
  *
  * Die Directive nutzt die öffentliche API von Angular Material und
  * beeinträchtigt keine internen Berechnungen.
@@ -30,10 +24,7 @@ import { MatPaginator } from '@angular/material/paginator';
 })
 export class SwipeNavigationDirective implements OnInit, OnDestroy {
   private elementRef = inject(ElementRef);
-
-  // Optional: Injiziere die Material-Komponenten, falls vorhanden
   private tabGroup = inject(MatTabGroup, { optional: true });
-  private paginator = inject(MatPaginator, { optional: true });
 
   // Konfigurierbare Schwellenwerte
   @Input() swipeThreshold = 50; // Minimale Distanz in Pixeln für Swipe
@@ -50,11 +41,11 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
     // Prüfe ob Touch-Events unterstützt werden
     this.isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
-    // Validiere dass eine unterstützte Komponente vorhanden ist
-    if (!this.tabGroup && !this.paginator) {
+    // Validiere dass MatTabGroup vorhanden ist
+    if (!this.tabGroup) {
       console.warn(
-        'SwipeNavigationDirective: Keine unterstützte Komponente gefunden. ' +
-        'Bitte auf mat-tab-group oder mat-paginator anwenden.'
+        'SwipeNavigationDirective: Keine MatTabGroup gefunden. ' +
+        'Bitte auf mat-tab-group anwenden.'
       );
     }
   }
@@ -188,35 +179,29 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
   }
 
   private navigateNext(): void {
-    if (this.tabGroup) {
-      // Nutze die öffentliche API von MatTabGroup
-      const currentIndex = this.tabGroup.selectedIndex || 0;
-      const maxIndex = (this.tabGroup._tabs?.length || 1) - 1;
+    if (!this.tabGroup) {
+      return;
+    }
 
-      if (currentIndex < maxIndex) {
-        this.tabGroup.selectedIndex = currentIndex + 1;
-      }
-    } else if (this.paginator) {
-      // Nutze die öffentliche API von MatPaginator
-      if (this.paginator.hasNextPage()) {
-        this.paginator.nextPage();
-      }
+    // Nutze die öffentliche API von MatTabGroup
+    const currentIndex = this.tabGroup.selectedIndex || 0;
+    const maxIndex = (this.tabGroup._tabs?.length || 1) - 1;
+
+    if (currentIndex < maxIndex) {
+      this.tabGroup.selectedIndex = currentIndex + 1;
     }
   }
 
   private navigatePrevious(): void {
-    if (this.tabGroup) {
-      // Nutze die öffentliche API von MatTabGroup
-      const currentIndex = this.tabGroup.selectedIndex || 0;
+    if (!this.tabGroup) {
+      return;
+    }
 
-      if (currentIndex > 0) {
-        this.tabGroup.selectedIndex = currentIndex - 1;
-      }
-    } else if (this.paginator) {
-      // Nutze die öffentliche API von MatPaginator
-      if (this.paginator.hasPreviousPage()) {
-        this.paginator.previousPage();
-      }
+    // Nutze die öffentliche API von MatTabGroup
+    const currentIndex = this.tabGroup.selectedIndex || 0;
+
+    if (currentIndex > 0) {
+      this.tabGroup.selectedIndex = currentIndex - 1;
     }
   }
 }

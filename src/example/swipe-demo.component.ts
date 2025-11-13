@@ -1,16 +1,12 @@
 import { Component } from '@angular/core';
 import { MatTabsModule } from '@angular/material/tabs';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-import { MatCardModule } from '@angular/material/card';
 import { CommonModule } from '@angular/common';
 import { SwipeNavigationDirective } from '../directives/swipe-navigation.directive';
 
 /**
  * Demo-Komponente für die SwipeNavigationDirective
  *
- * Zeigt Beispiele für:
- * - Swipe-Navigation bei Tabs (mat-tab-group)
- * - Swipe-Navigation bei Pagination (mat-paginator)
+ * Zeigt Swipe-Navigation für Angular Material Tabs
  */
 @Component({
   selector: 'app-swipe-demo',
@@ -18,20 +14,17 @@ import { SwipeNavigationDirective } from '../directives/swipe-navigation.directi
   imports: [
     CommonModule,
     MatTabsModule,
-    MatPaginatorModule,
-    MatCardModule,
     SwipeNavigationDirective
   ],
   template: `
     <div class="demo-container">
-      <h1>Swipe Navigation Demo</h1>
+      <h1>Tabs Swipe Navigation</h1>
       <p class="demo-hint">
         💡 Tipp: Swipe mit dem Finger oder ziehe mit der Maus nach links/rechts
       </p>
 
       <!-- Tabs Beispiel -->
       <section class="demo-section">
-        <h2>Tabs mit Swipe-Navigation</h2>
         <mat-tab-group
           appSwipeNavigation
           class="swipe-enabled"
@@ -65,29 +58,6 @@ import { SwipeNavigationDirective } from '../directives/swipe-navigation.directi
         <p class="current-info">Aktuelle Tab: {{ selectedTabIndex + 1 }} von 4</p>
       </section>
 
-      <!-- Paginator Beispiel -->
-      <section class="demo-section">
-        <h2>Pagination mit Swipe-Navigation</h2>
-        <mat-card class="paginator-demo">
-          <mat-card-content>
-            <div class="page-content">
-              <h3>Seite {{ currentPage + 1 }} von {{ totalPages }}</h3>
-              <p>{{ getPageContent() }}</p>
-            </div>
-          </mat-card-content>
-        </mat-card>
-        <mat-paginator
-          appSwipeNavigation
-          class="swipe-enabled"
-          [length]="totalItems"
-          [pageSize]="pageSize"
-          [pageIndex]="currentPage"
-          (page)="onPageChange($event)"
-          [pageSizeOptions]="[5, 10, 25, 100]"
-          showFirstLastButtons>
-        </mat-paginator>
-      </section>
-
       <!-- Informationen -->
       <section class="demo-section info-section">
         <h3>Wie funktioniert's?</h3>
@@ -95,7 +65,7 @@ import { SwipeNavigationDirective } from '../directives/swipe-navigation.directi
           <li><strong>Touch-Geräte:</strong> Swipe mit dem Finger nach links/rechts</li>
           <li><strong>Desktop:</strong> Klicke und ziehe mit der Maus nach links/rechts</li>
           <li><strong>Schwellenwert:</strong> Mindestens 50px Bewegung oder schnelle Geste</li>
-          <li><strong>Angular Material API:</strong> Verwendet nur öffentliche APIs, keine internen Berechnungen werden beeinträchtigt</li>
+          <li><strong>Angular Material API:</strong> Verwendet nur die öffentliche selectedIndex API</li>
         </ul>
       </section>
     </div>
@@ -159,20 +129,6 @@ import { SwipeNavigationDirective } from '../directives/swipe-navigation.directi
       font-style: italic;
     }
 
-    .paginator-demo {
-      margin-bottom: 16px;
-    }
-
-    .page-content {
-      min-height: 150px;
-      padding: 16px;
-    }
-
-    .page-content h3 {
-      color: #3f51b5;
-      margin-top: 0;
-    }
-
     .info-section {
       background: #fff3e0;
       border-left: 4px solid #ff9800;
@@ -199,28 +155,5 @@ import { SwipeNavigationDirective } from '../directives/swipe-navigation.directi
   `]
 })
 export class SwipeDemoComponent {
-  // Tab State
   selectedTabIndex = 0;
-
-  // Paginator State
-  currentPage = 0;
-  pageSize = 10;
-  totalItems = 100;
-
-  get totalPages(): number {
-    return Math.ceil(this.totalItems / this.pageSize);
-  }
-
-  onPageChange(event: PageEvent): void {
-    this.currentPage = event.pageIndex;
-    this.pageSize = event.pageSize;
-  }
-
-  getPageContent(): string {
-    const start = this.currentPage * this.pageSize + 1;
-    const end = Math.min((this.currentPage + 1) * this.pageSize, this.totalItems);
-
-    return `Zeige Einträge ${start} bis ${end} von insgesamt ${this.totalItems}. ` +
-           `Swipe nach links für die nächste Seite oder nach rechts für die vorherige Seite.`;
-  }
 }
