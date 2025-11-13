@@ -3,7 +3,7 @@ import {
   ElementRef,
   Input,
   OnDestroy,
-  OnInit,
+  AfterViewInit,
   Renderer2,
   inject
 } from '@angular/core';
@@ -61,7 +61,7 @@ interface GestureEnd {
   selector: '[appSwipeNavigation]',
   standalone: true
 })
-export class SwipeNavigationDirective implements OnInit, OnDestroy {
+export class SwipeNavigationDirective implements AfterViewInit, OnDestroy {
   private elementRef = inject(ElementRef);
   private renderer = inject(Renderer2);
   private tabGroup = inject(MatTabGroup, { optional: true });
@@ -80,8 +80,8 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
   private lastClickThreshold = 0; // Track when we last clicked
   private clickInterval = 100; // Click pagination button every 100px of drag
 
-  ngOnInit(): void {
-    console.log('=== SwipeNavigationDirective ngOnInit START ===');
+  ngAfterViewInit(): void {
+    console.log('=== SwipeNavigationDirective ngAfterViewInit START ===');
 
     // Validate that MatTabGroup is present
     if (!this.tabGroup) {
@@ -124,12 +124,11 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
           overflowX: getComputedStyle(element).overflowX
         });
 
-        // Check if element is actually scrollable
-        if (element.scrollWidth > element.clientWidth) {
-          this.scrollableContainer = element;
-          console.log(`Using ${selector} as scrollable container`);
-          break;
-        }
+        // Use the first found element - don't check if scrollable yet
+        // Angular Material may calculate sizes after view init
+        this.scrollableContainer = element;
+        console.log(`Using ${selector} as scrollable container`);
+        break;
       }
     }
 
