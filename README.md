@@ -9,6 +9,8 @@ An Angular directive that enables touch-swipe and mouse-drag navigation for Angu
 - ✅ **Swipe gestures** for touch devices (smartphones, tablets)
 - ✅ **Mouse drag** for desktop devices
 - ✅ Supports **MatTabGroup** (Tabs)
+- ✅ **Header-only functionality** - swipe only works on the tab header, not in the tab content
+- ✅ **Reactive visual feedback** - opacity changes during swipe/drag for better UX
 - ✅ **No internal calculations are affected** - uses only the public selectedIndex API
 - ✅ Configurable thresholds for swipe distance and velocity
 - ✅ Standalone Directive (Angular 20)
@@ -57,11 +59,13 @@ The directive offers two configurable parameters:
 
 The directive:
 
-1. Listens to touch events (`touchstart`, `touchmove`, `touchend`) and mouse events (`mousedown`, `mousemove`, `mouseup`)
-2. Recognizes horizontal swipe/drag gestures
-3. Ignores vertical movements (allows normal scrolling)
-4. Uses the **public API** of Angular Material: `MatTabGroup.selectedIndex`
-5. Does **not interfere with internal calculations** of Angular Material
+1. **Restricts to header area** - Only responds to touch/mouse events in the tab header, not in the tab content
+2. Listens to touch events (`touchstart`, `touchmove`, `touchend`) and mouse events (`mousedown`, `mousemove`, `mouseup`)
+3. **Provides visual feedback** - The tab header opacity changes during swipe/drag to indicate the gesture
+4. Recognizes horizontal swipe/drag gestures
+5. Ignores vertical movements (allows normal scrolling)
+6. Uses the **public API** of Angular Material: `MatTabGroup.selectedIndex`
+7. Does **not interfere with internal calculations** of Angular Material
 
 ## Demo
 
@@ -73,8 +77,9 @@ npm start
 ```
 
 The demo shows:
-- Swipe navigation for tabs
+- Swipe navigation for tabs (header only)
 - Touch and mouse interactions
+- Reactive visual feedback during gestures
 
 ## Browser Compatibility
 
