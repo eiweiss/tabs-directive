@@ -70,39 +70,3 @@ The directive uses **Reactive Programming with RxJS**:
 5. **Momentum** - Fast swipes continue scrolling with smooth animation
 6. **Automatic Cleanup** - All subscriptions are automatically cleaned up with `takeUntil(destroy$)`
 7. **Horizontal Gestures** - Recognizes horizontal swipe/drag gestures, ignores vertical movements
-
-## Demo
-
-Start the application to see the demo:
-
-```bash
-npm install
-npm start
-```
-
-The demo shows:
-- 20 tabs with pagination arrows
-- Swipe/drag to scroll through tab headers
-- Touch and mouse interactions
-- Momentum scrolling on fast swipes
-
-## Browser Compatibility
-
-- ✅ All modern browsers
-- ✅ Touch devices (iOS, Android)
-- ✅ Desktop with mouse
-- ✅ Hybrid devices (touch + mouse)
-
-## Technical Details
-
-- **Programming Paradigm**: Reactive Programming with RxJS
-- **Angular Version**: 20.2.0
-- **Angular Material Version**: 20.2.0
-- **RxJS**: ~7.8.0
-- **TypeScript**: 5.9.2
-- **Standalone**: Yes (no modules needed)
-- **Memory Management**: Automatic subscription cleanup with `takeUntil` pattern
-
-## License
-
-MIT
