@@ -343,7 +343,7 @@ export class SwipeNavigationDirective implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * Simulate a click on pagination button using native MouseEvent
+   * Simulate a click on pagination button
    */
   private clickPaginationButton(direction: 'before' | 'after'): void {
     const button = direction === 'before' ? this.paginationBefore : this.paginationAfter;
@@ -357,29 +357,8 @@ export class SwipeNavigationDirective implements AfterViewInit, OnDestroy {
       return;
     }
 
-    // Dispatch native mouse events that Angular Material listens to
-    const mouseDownEvent = new MouseEvent('mousedown', {
-      bubbles: true,
-      cancelable: true,
-      view: window,
-      button: 0
-    });
-    const mouseUpEvent = new MouseEvent('mouseup', {
-      bubbles: true,
-      cancelable: true,
-      view: window,
-      button: 0
-    });
-    const clickEvent = new MouseEvent('click', {
-      bubbles: true,
-      cancelable: true,
-      view: window,
-      button: 0
-    });
-
-    button.dispatchEvent(mouseDownEvent);
-    button.dispatchEvent(mouseUpEvent);
-    button.dispatchEvent(clickEvent);
+    // Simple click() works now that we're using AfterViewInit
+    button.click();
   }
 
   /**
