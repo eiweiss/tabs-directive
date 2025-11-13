@@ -98,7 +98,31 @@ export class SwipeNavigationDirective implements OnInit, OnDestroy {
     }
 
     // Find the scrollable tab list container
-    this.scrollableContainer = this.tabHeaderElement.querySelector('.mat-mdc-tab-list');
+    // Try different possible selectors for Angular Material's scrollable element
+    let possibleSelectors = [
+      '.mat-mdc-tab-list',
+      '.mat-mdc-tab-labels',
+      '.mat-mdc-tab-label-container'
+    ];
+
+    for (const selector of possibleSelectors) {
+      const element = this.tabHeaderElement.querySelector(selector) as HTMLElement;
+      if (element) {
+        console.log(`Found element with selector: ${selector}`, {
+          scrollWidth: element.scrollWidth,
+          clientWidth: element.clientWidth,
+          overflow: getComputedStyle(element).overflow,
+          overflowX: getComputedStyle(element).overflowX
+        });
+
+        // Check if element is actually scrollable
+        if (element.scrollWidth > element.clientWidth) {
+          this.scrollableContainer = element;
+          console.log(`Using ${selector} as scrollable container`);
+          break;
+        }
+      }
+    }
 
     if (!this.scrollableContainer) {
       console.warn(
