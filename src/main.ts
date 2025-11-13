@@ -7,14 +7,18 @@
  */
 
 import {bootstrapApplication} from '@angular/platform-browser';
+import {provideAnimations} from '@angular/platform-browser/animations';
 import {provideHttpClient} from '@angular/common/http';
 import {VERSION as CDK_VERSION} from '@angular/cdk';
 import {VERSION as MAT_VERSION} from '@angular/material/core';
-import {TabNavBarBasicExample} from './example/tab-nav-bar-basic-example';
+import {SwipeDemoComponent} from './example/swipe-demo.component';
 
 console.info('Angular CDK version', CDK_VERSION.full);
 console.info('Angular Material version', MAT_VERSION.full);
 
-bootstrapApplication(TabNavBarBasicExample, {
-  providers: [provideHttpClient()],
+bootstrapApplication(SwipeDemoComponent, {
+  providers: [
+    provideAnimations(),
+    provideHttpClient()
+  ],
 }).catch(err => console.error(err));
