@@ -7,6 +7,7 @@ import { SwipeNavigationDirective } from '../directives/swipe-navigation.directi
  * Demo component for the SwipeNavigationDirective
  *
  * Demonstrates swipe navigation for Angular Material Tabs
+ * using Reactive Programming with RxJS
  */
 @Component({
   selector: 'app-swipe-demo',
@@ -20,7 +21,7 @@ import { SwipeNavigationDirective } from '../directives/swipe-navigation.directi
     <div class="demo-container">
       <h1>Tabs Swipe Navigation</h1>
       <p class="demo-hint">
-        💡 Tip: Swipe with your finger or drag with the mouse left/right
+        💡 Tip: Swipe with your finger or drag with the mouse left/right <strong>on the tab header</strong>
       </p>
 
       <!-- Tabs Example -->
@@ -33,25 +34,29 @@ import { SwipeNavigationDirective } from '../directives/swipe-navigation.directi
           <mat-tab label="First Tab">
             <div class="tab-content">
               <h3>Welcome to the first tab</h3>
-              <p>Swipe left or drag with the mouse to the left to go to the next tab.</p>
+              <p>Swipe left on the <strong>tab header</strong> to go to the next tab. Notice the visual feedback when you swipe!</p>
+              <p>This content area does not respond to swipe gestures - only the header does.</p>
             </div>
           </mat-tab>
           <mat-tab label="Second Tab">
             <div class="tab-content">
               <h3>This is the second tab</h3>
-              <p>You can swipe/drag left or right to navigate between tabs.</p>
+              <p>You can swipe/drag left or right on the header to navigate between tabs.</p>
+              <p>The opacity changes as you swipe to provide reactive feedback.</p>
             </div>
           </mat-tab>
           <mat-tab label="Third Tab">
             <div class="tab-content">
               <h3>The third tab</h3>
-              <p>Swipe right or drag to the right to go back.</p>
+              <p>Swipe right on the header to go back to previous tabs.</p>
+              <p>Try swiping in this content area - it won't work! Only the header responds.</p>
             </div>
           </mat-tab>
           <mat-tab label="Fourth Tab">
             <div class="tab-content">
               <h3>Last tab</h3>
-              <p>This is the last tab. Swipe only works within the available tabs.</p>
+              <p>This is the last tab. The swipe functionality is restricted to the header area only.</p>
+              <p>This allows you to interact normally with tab content that might need scrolling or other gestures.</p>
             </div>
           </mat-tab>
         </mat-tab-group>
@@ -62,9 +67,13 @@ import { SwipeNavigationDirective } from '../directives/swipe-navigation.directi
       <section class="demo-section info-section">
         <h3>How does it work?</h3>
         <ul>
-          <li><strong>Touch devices:</strong> Swipe with your finger left/right</li>
-          <li><strong>Desktop:</strong> Click and drag with the mouse left/right</li>
+          <li><strong>Reactive Programming:</strong> Built with RxJS observables and operators (fromEvent, switchMap, takeUntil, etc.)</li>
+          <li><strong>Header only:</strong> Swipe/drag only works on the tab header, not in the tab content</li>
+          <li><strong>Touch devices:</strong> Swipe with your finger left/right on the header</li>
+          <li><strong>Desktop:</strong> Click and drag with the mouse left/right on the header</li>
+          <li><strong>Visual feedback:</strong> The header opacity changes during the gesture for reactive feedback</li>
           <li><strong>Threshold:</strong> At least 50px movement or fast gesture</li>
+          <li><strong>Memory safe:</strong> Automatic cleanup with takeUntil pattern prevents memory leaks</li>
           <li><strong>Angular Material API:</strong> Uses only the public selectedIndex API</li>
         </ul>
       </section>
